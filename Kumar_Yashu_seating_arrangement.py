@@ -25,7 +25,7 @@ def read_input_files():
     Cleans up whitespace and semicolns that ensures all necessary columns exist.
     """
     try:
-        # TODO: Read all input files, strip spaces, validate columns
+        # TODO: Reading all input files, strip spaces, validate columns
         xls = pd.ExcelFile("input_data_tt.xlsx") 
         required_sheets = ['in_timetable', 'in_course_roll_mapping', 'in_roll_name_mapping', 'in_room_capacity'] 
         if not all(sheet in xls.sheet_names for sheet in required_sheets):
@@ -77,7 +77,7 @@ def check_clashes(subjects, course_roll_df):
     Checks if any student is enrolled in more than one subject (i.e., roll number appears in multiple subject lists).
     Returns True if there is a clash, else False.
     """
-    # TODO: For all subjects in a slot, check for roll number intersection (clash)
+    # TODO: For all subjects in a slot, checking for roll number intersection (clash)
     roll_sets = []
     for subj in subjects:
         rolls = set(course_roll_df[course_roll_df['course_code'] == subj]['rollno'])
@@ -102,10 +102,10 @@ def allocate_subjects(subjects, course_roll_df, room_df, buffer, arrangement_typ
     - Honors buffer and capacity
     Returns allocation dictionary, unallocated students, and updated room capacities
     """
-    # TODO: Sort subjects by size, allocate largest first, try to minimize rooms for large courses
-    # TODO: Try to keep a subject within the same block/building/floor if possible
-    # TODO: Apply buffer and sparse/dense logic to effective room capacity
-    # TODO: If more students than total capacity, log and print "Cannot allocate due to excess students"
+    # TODO: Sorting subjects by size, allocate largest first, try to minimize rooms for large courses
+    # TODO: Trying to keep a subject within the same block/building/floor if possible
+    # TODO: Applying buffer and sparse/dense logic to effective room capacity
+    # TODO: If more students than total capacity, logging and printing "Cannot allocate due to excess students"
     room_df = room_df.copy()
     room_df['floor'] = room_df['Room No.'].str.extract(r'(\d{2,})').astype(float)
     room_df['remaining'] = room_df['Exam Capacity'] - buffer
@@ -173,7 +173,7 @@ def format_room_excel(filepath, date_str, session, room, course, df):
     - Student list (roll number, name)
     - Static placeholder rows for TAs and Invigilators
     """
-    # TODO: Format Excel file as per sample, retain headers, roll numbers, placeholders
+    # TODO: Formating Excel file as per sample, retain headers, roll numbers, placeholders
     wb = Workbook()
     ws = wb.active
 
@@ -204,8 +204,8 @@ def generate_outputs(date_str, day_str, session, allocation, roll_name_dict, roo
     - Master file with overall arrangement
     - Seats left summary file
     """
-    # TODO: Create folder structure <date>_<day>/<session>/
-    # TODO: Write per-room Excel files, master file, and seats left summary
+    # TODO: Creating folder structure <date>_<day>/<session>/
+    # TODO: Writing per-room Excel files, master file, and seats left summary
     base_dir = f"{date_str.replace('-', '')}_{day_str.replace(' ', '_')}"
     session_dir = os.path.join(base_dir, session.lower())
     os.makedirs(session_dir, exist_ok=True)
@@ -214,7 +214,7 @@ def generate_outputs(date_str, day_str, session, allocation, roll_name_dict, roo
     for (subj, room), rolls in allocation.items():
         df = pd.DataFrame({
             'Roll Number': rolls,
-            # TODO: If roll number missing in mapping, use "Unknown Name"
+            # TODO: If roll number missing in mapping, we use "Unknown Name"
             'Name': [roll_name_dict.get(r, "Unknown Name") for r in rolls]
         })
         filename = f"{subj}_{room}.xlsx"
@@ -227,7 +227,7 @@ def generate_outputs(date_str, day_str, session, allocation, roll_name_dict, roo
             'course_code': subj,
             'Room': room,
             'Allocated_students_count': len(rolls),
-            # TODO: Rolls should be semicolon separated
+            # TODO: Rolls should be semicolon separated in master file
             'Roll_list (semicolon separated_)': ';'.join(rolls)
         })
 
@@ -258,7 +258,7 @@ def main():
     Interacts with the user, processes all days/sessions, and generates outputs.
     """
     try:
-        # TODO: Commandline version, take buffer and sparse/dense as input
+        # TODO: Commandline version, taking buffer and sparse/dense as input
         timetable_df, course_roll_df, roll_name_df, room_df = read_input_files()
         roll_name_dict = roll_name_df.set_index('rollno')['name'].to_dict()
 
@@ -281,7 +281,7 @@ def main():
                     continue
                 print(f"\nProcessing {date_str} {session}...")
 
-                # TODO: Check for clashes and print/log as required
+                # TODO: Checking for clashes and print/log as required
                 if check_clashes(subjects, course_roll_df):
                     print("Clash detected. Skipping allocation for this slot.")
                     continue
@@ -301,6 +301,6 @@ def main():
         logging.critical(f"Fatal error: {str(e)}", exc_info=True)
         print("Critical error occurred! Check errors.txt for details.")
 
-# --- 9. Script Entry Point ---
+# --- 9. Script Entry Point command line version ---
 if __name__ == "__main__":
     main()
