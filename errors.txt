@@ -1,0 +1,20 @@
+2025-05-16 11:21:31,868 - CRITICAL - Fatal error: [Errno 13] Permission denied: 'op_overall_seating_arrangement.xlsx'
+Traceback (most recent call last):
+  File "C:\Users\devel\OneDrive\Desktop\internship IITP\seating_arrangement.py", line 322, in main
+    generate_outputs(date_str, day_str, session, allocation, roll_name_dict, room_df, remaining_cap)
+  File "C:\Users\devel\OneDrive\Desktop\internship IITP\seating_arrangement.py", line 217, in generate_outputs
+    existing = pd.read_excel(master_file)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\devel\anaconda3\Lib\site-packages\pandas\io\excel\_base.py", line 495, in read_excel
+    io = ExcelFile(
+         ^^^^^^^^^^
+  File "C:\Users\devel\anaconda3\Lib\site-packages\pandas\io\excel\_base.py", line 1550, in __init__
+    ext = inspect_excel_format(
+          ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\devel\anaconda3\Lib\site-packages\pandas\io\excel\_base.py", line 1402, in inspect_excel_format
+    with get_handle(
+         ^^^^^^^^^^^
+  File "C:\Users\devel\anaconda3\Lib\site-packages\pandas\io\common.py", line 882, in get_handle
+    handle = open(handle, ioargs.mode)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+PermissionError: [Errno 13] Permission denied: 'op_overall_seating_arrangement.xlsx'
