@@ -1,0 +1,33 @@
+Todo 
+https://youtu.be/D39TZJWfVSM
+
+Design the seating arrangement for an exam given the timetable and other required details.
+
+Points to be taken care.
+1)First find the largest course on a day/slot. (say 30-04-2016 Sunday CS249; CH426; MM304; CB308; CE216; CB204; PH422; MM202), pick the largest course and allot it first. Try to have minimal rooms for large courses. Try not to put a single subject in B1 as well as B2, since it may be difficult for faculty to move to multiple buildings. Also, try to optimize the movement within same building. So a course should not be in 6101, then 10502. Try to fill adjacent room or close room.
+
+2) User inputs to be taken:
+a) Take "buffer" as input. If buffer is 5, and if the capacity of the class is 50 students, fill only 45 students in that class.
+
+b) Sparse/Dense as input: If Sparse is selected and if the capacity of the class is 50 students, fill only 25 students (50%) for a subject in that class. If Dense is selected and if the capacity of the class is 50 students, fill 50 students in that class. If the buffer is 5, then effective capacity will be 45/2 (sparse) per subject, and 45 for dense per subject.
+
+
+Output:
+
+1. Check the folder structure, each day has a folder and subfolder evening and morning.
+
+2. Check the excel file format. You need to replicate the same.
+
+3. Check for clashes on the day. For checking clash, take all the subjects of that slot (say 30-04-2016 Sunday CS249; CH426; MM304; CB308; CE216; CB204; PH422; MM202), the intersection of the set of roll number between all the subjects should be empty set. Else display on the terminal that there is a clash and mention the subject code + roll number.
+
+4. Make use of Python logging library for logging detailed executing steps and errors. Also implement the code in try catch so that it does not abruptly exit. If there are more students than capacity of all classroom, it should display "Cannot allocate due to excess students". Use python strip() function to clear any additional spaces that come while reading inputs. Errors should be logged in a errors.txt file.
+
+5. Check the output excel file. Retain the headers and ensure rolls are semicolon separated. (op_overall_seating_arrangement.xlsx + op_seats_left.xlsx) 
+
+6. There should be a Commandline version - python3 seating_arrangement.py. 
+
+7. If a roll number -- name mapping is missing from "in_roll_name_mapping" then keep name as "Unknown Name"
+
+Demo: 
+Upload a help tutorial on Youtube on how to execute the code and show some of the outputs. Use unlisted mode for uploading the video. Google form for posting the youtube link to be shared later. 
+
