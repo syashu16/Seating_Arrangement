@@ -20,14 +20,12 @@ def read_input_files():
     Cleans up whitespace and ensures all necessary columns exist.
     """
     try:
-        # Load Excel file
+        # TODO: Read all input files, strip spaces, validate columns
         xls = pd.ExcelFile("input_data_tt.xlsx")
-        # Check if all required sheets are present
         required_sheets = ['in_timetable', 'in_course_roll_mapping', 'in_roll_name_mapping', 'in_room_capacity']
         if not all(sheet in xls.sheet_names for sheet in required_sheets):
             raise ValueError("Missing required sheets in input file")
 
-        # Read and clean timetable (subjects split and stripped)
         timetable_df = pd.read_excel(xls, 'in_timetable')
         timetable_df['Date'] = pd.to_datetime(timetable_df['Date'], format='%Y-%m-%d')
         for col in ['Morning', 'Evening']:
@@ -35,21 +33,18 @@ def read_input_files():
                 lambda x: [] if pd.isna(x) else [s.strip() for s in str(x).split(';') if s.strip()]
             ).apply(lambda lst: [s for s in lst if s.upper() != 'NO EXAM'])
 
-        # Course to roll number mapping
         course_roll_df = pd.read_excel(xls, 'in_course_roll_mapping')
         course_roll_df['course_code'] = course_roll_df['course_code'].astype(str).str.strip()
         course_roll_df['rollno'] = course_roll_df['rollno'].astype(str).str.strip()
 
-        # Roll number to student name mapping
         roll_name_df = pd.read_excel(xls, 'in_roll_name_mapping')
         roll_name_df.columns = [c.strip() for c in roll_name_df.columns]
-        if 'Roll' in roll_name_df.columns:  # Handle possible column header differences
+        if 'Roll' in roll_name_df.columns:
             roll_name_df.rename(columns={'Roll': 'rollno', 'Name': 'name'}, inplace=True)
         roll_name_df['rollno'] = roll_name_df['rollno'].astype(str).str.strip()
         roll_name_df['name'] = roll_name_df['name'].astype(str).str.strip()
 
-        # Room capacity and details
-        room_df = pd.read_excel(xls, 'in_room_capacity').iloc[:, :3]  # Only first 3 columns needed
+        room_df = pd.read_excel(xls, 'in_room_capacity').iloc[:, :3]
         room_df.columns = ['Room No.', 'Exam Capacity', 'Block']
         room_df['Room No.'] = room_df['Room No.'].astype(str).str.strip()
         room_df['Block'] = room_df['Block'].astype(str).str.strip()
@@ -77,11 +72,11 @@ def check_clashes(subjects, course_roll_df):
     Checks if any student is enrolled in more than one subject (i.e., roll number appears in multiple subject lists).
     Returns True if there is a clash, else False.
     """
+    # TODO: For all subjects in a slot, check for roll number intersection (clash)
     roll_sets = []
     for subj in subjects:
         rolls = set(course_roll_df[course_roll_df['course_code'] == subj]['rollno'])
         roll_sets.append(rolls)
-    # Compare each subject's roll numbers with every other subject's roll numbers
     for i in range(len(roll_sets)):
         for j in range(i+1, len(roll_sets)):
             common = roll_sets[i] & roll_sets[j]
@@ -102,28 +97,25 @@ def allocate_subjects(subjects, course_roll_df, room_df, buffer, arrangement_typ
     - Honors buffer and capacity
     Returns allocation dictionary, unallocated students, and updated room capacities
     """
-    # Copy room data to avoid altering original dataframe
+    # TODO: Sort subjects by size, allocate largest first, try to minimize rooms for large courses
+    # TODO: Try to keep a subject within the same block/building/floor if possible
+    # TODO: Apply buffer and sparse/dense logic to effective room capacity
+    # TODO: If more students than total capacity, log and print "Cannot allocate due to excess students"
     room_df = room_df.copy()
-    # Extract floor for proximity optimization (if present in room number)
     room_df['floor'] = room_df['Room No.'].str.extract(r'(\d{2,})').astype(float)
-    # Calculate the effective remaining seats after applying buffer
     room_df['remaining'] = room_df['Exam Capacity'] - buffer
 
-    # Adjust for sparse arrangement: only half the effective capacity per subject
     if arrangement_type.lower() == 'sparse':
         room_df['remaining'] = room_df['remaining'] // 2
-    # Ensure no negative capacities
     room_df['remaining'] = room_df['remaining'].apply(lambda x: max(x, 0))
 
-    # Sort rooms for allocation: Block, Floor, then by capacity (largest first)
     room_df = room_df.sort_values(['Block', 'floor', 'remaining'], ascending=[True, True, False])
 
-    allocation = defaultdict(list)  # {(subject, room): [rolls]}
-    unallocated = {}               # subject: [rolls not allocated]
+    allocation = defaultdict(list)
+    unallocated = {}
     room_capacity = room_df.set_index('Room No.')['remaining'].to_dict()
     block_rooms = room_df.groupby('Block')['Room No.'].apply(list).to_dict()
 
-    # Sort subjects by number of students (largest first)
     subject_sizes = {subj: len(course_roll_df[course_roll_df['course_code'] == subj]) for subj in subjects}
     sorted_subjects = sorted(subjects, key=lambda x: -subject_sizes[x])
 
@@ -132,7 +124,6 @@ def allocate_subjects(subjects, course_roll_df, room_df, buffer, arrangement_typ
         remaining_students = students.copy()
         allocated = False
 
-        # Try to allocate all rooms for this subject within the same block first (to minimize movement)
         for block in block_rooms:
             if not remaining_students:
                 break
@@ -150,7 +141,6 @@ def allocate_subjects(subjects, course_roll_df, room_df, buffer, arrangement_typ
                 allocated = True
                 break
 
-        # If still students left, allocate in any available room
         if not allocated and remaining_students:
             for room in room_df['Room No.']:
                 if not remaining_students:
@@ -163,7 +153,6 @@ def allocate_subjects(subjects, course_roll_df, room_df, buffer, arrangement_typ
                 room_capacity[room] -= alloc
                 remaining_students = remaining_students[alloc:]
 
-        # If students couldn't be allocated, note them as unallocated
         if remaining_students:
             unallocated[subj] = remaining_students
             logging.warning(f"Couldn't allocate {len(remaining_students)} students for {subj}")
@@ -179,10 +168,10 @@ def format_room_excel(filepath, date_str, session, room, course, df):
     - Student list (roll number, name)
     - Static placeholder rows for TAs and Invigilators
     """
+    # TODO: Format Excel file as per sample, retain headers, roll numbers, placeholders
     wb = Workbook()
     ws = wb.active
 
-    # Add merged and centered header row
     header_text = f"Exam Date: {date_str} | Session: {session} | Room: {room} | Course: {course}"
     ncols = len(df.columns)
     ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=ncols)
@@ -190,12 +179,10 @@ def format_room_excel(filepath, date_str, session, room, course, df):
     cell.alignment = Alignment(horizontal='center', vertical='center')
     cell.font = Font(bold=True, size=12)
 
-    # Add student list (header and rows)
     for r_idx, row in enumerate(dataframe_to_rows(df, index=False, header=True), start=2):
         for c_idx, value in enumerate(row, start=1):
             ws.cell(row=r_idx, column=c_idx, value=value)
 
-    # Add 5 TA and 5 Invigilator placeholders (static text)
     start_row = ws.max_row + 2
     for i in range(1, 6):
         ws.cell(row=start_row + i - 1, column=1, value=f"TA {i}")
@@ -212,34 +199,33 @@ def generate_outputs(date_str, day_str, session, allocation, roll_name_dict, roo
     - Master file with overall arrangement
     - Seats left summary file
     """
-    # Create output directory structure: <date>_<day>/<session>/
+    # TODO: Create folder structure <date>_<day>/<session>/
+    # TODO: Write per-room Excel files, master file, and seats left summary
     base_dir = f"{date_str.replace('-', '')}_{day_str.replace(' ', '_')}"
     session_dir = os.path.join(base_dir, session.lower())
     os.makedirs(session_dir, exist_ok=True)
 
-    # Prepare rows for master Excel file
     master_rows = []
     for (subj, room), rolls in allocation.items():
-        # Prepare student list for the room, fill "Unknown Name" if name is missing
         df = pd.DataFrame({
             'Roll Number': rolls,
+            # TODO: If roll number missing in mapping, use "Unknown Name"
             'Name': [roll_name_dict.get(r, "Unknown Name") for r in rolls]
         })
         filename = f"{subj}_{room}.xlsx"
         filepath = os.path.join(session_dir, filename)
         format_room_excel(filepath, date_str, session, room, subj, df)
 
-        # Add summary row to master
         master_rows.append({
             'Date': date_str,
             'Day': day_str,
             'course_code': subj,
             'Room': room,
             'Allocated_students_count': len(rolls),
+            # TODO: Rolls should be semicolon separated
             'Roll_list (semicolon separated_)': ';'.join(rolls)
         })
 
-    # Write/update master file (appends if exists)
     master_file = 'op_overall_seating_arrangement.xlsx'
     if os.path.exists(master_file):
         existing = pd.read_excel(master_file)
@@ -248,7 +234,6 @@ def generate_outputs(date_str, day_str, session, allocation, roll_name_dict, roo
         master_df = pd.DataFrame(master_rows)
     master_df.to_excel(master_file, index=False)
 
-    # Generate/overwrite seats left summary
     seats_left = []
     for _, row in room_df.iterrows():
         room = row['Room No.']
@@ -268,43 +253,38 @@ def main():
     Interacts with the user, processes all days/sessions, and generates outputs.
     """
     try:
-        # Load and clean all data from input file
+        # TODO: Commandline version, take buffer and sparse/dense as input
         timetable_df, course_roll_df, roll_name_df, room_df = read_input_files()
-        roll_name_dict = roll_name_df.set_index('rollno')['name'].to_dict()  # Quick lookup for names
+        roll_name_dict = roll_name_df.set_index('rollno')['name'].to_dict()
 
-        # Display quick summary to the user
         print("Data loaded successfully:")
         print(f"- Timetable entries: {len(timetable_df)}")
         print(f"- Unique courses: {course_roll_df['course_code'].nunique()}")
         print(f"- Rooms: {len(room_df)}")
 
-        # Get user input for buffer and arrangement type
         buffer = int(input("Enter buffer (seats to leave empty in each room): "))
         arrangement_type = input("Enter allocation type (sparse/dense): ").lower()
         while arrangement_type not in ['sparse', 'dense']:
             arrangement_type = input("Invalid input! Enter 'sparse' or 'dense': ").lower()
 
-        # Process each date and both sessions
         for _, row in timetable_df.iterrows():
             date_str = row['Date'].strftime('%Y-%m-%d')
             day_str = row['Day']
             for session in ['Morning', 'Evening']:
                 subjects = row[session]
                 if not subjects:
-                    continue  # Skip if no exam in this session
+                    continue
                 print(f"\nProcessing {date_str} {session}...")
 
-                # Check for student clashes
+                # TODO: Check for clashes and print/log as required
                 if check_clashes(subjects, course_roll_df):
                     print("Clash detected. Skipping allocation for this slot.")
                     continue
 
-                # Allocate rooms for all subjects in this slot
                 allocation, unallocated, remaining_cap = allocate_subjects(
                     subjects, course_roll_df, room_df, buffer, arrangement_type
                 )
 
-                # Generate output files for this session
                 generate_outputs(date_str, day_str, session, allocation, roll_name_dict, room_df, remaining_cap)
                 print(f"Processed {len(subjects)} subjects for {session} session.")
                 if unallocated:
