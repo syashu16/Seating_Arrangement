@@ -1,28 +1,33 @@
-import os
-import pandas as pd
-import logging
-from collections import defaultdict
-from openpyxl import Workbook
-from openpyxl.utils.dataframe import dataframe_to_rows
-from openpyxl.styles import Alignment, Font
+# NAME :- KUMAR YASHU
+# COLLEGE :- CHRIST (DEEMED TO BE UNIVERSITY), BANGALORE
+# TASK :- SEATING ARRANGEMENT FOR EXAMINATION 
+
+# LIBARIES USED
+import os # For file and directory operations
+import pandas as pd # For data manipulation and analysis
+import logging # For logging errors and information
+from collections import defaultdict # For creating default dictionaries
+from openpyxl import Workbook # For creating and manipulating Excel files
+from openpyxl.utils.dataframe import dataframe_to_rows  # For converting DataFrames to Excel rows
+from openpyxl.styles import Alignment, Font # For styling Excel cells
 
 # --- 1. Setup Logging for Error Tracking ---
 logging.basicConfig(
     filename='errors.txt',      # Log file for errors
     level=logging.INFO,         # Log both info and error messages
-    format='%(asctime)s - %(levelname)s - %(message)s'
+    format='%(asctime)s - %(levelname)s - %(message)s' # Log format
 )
 
 # --- 2. Input Data Reading and Cleaning ---
 def read_input_files():
     """
     Reads and validates all required input sheets from the Excel file.
-    Cleans up whitespace and ensures all necessary columns exist.
+    Cleans up whitespace and semicolns that ensures all necessary columns exist.
     """
     try:
         # TODO: Read all input files, strip spaces, validate columns
-        xls = pd.ExcelFile("input_data_tt.xlsx")
-        required_sheets = ['in_timetable', 'in_course_roll_mapping', 'in_roll_name_mapping', 'in_room_capacity']
+        xls = pd.ExcelFile("input_data_tt.xlsx") 
+        required_sheets = ['in_timetable', 'in_course_roll_mapping', 'in_roll_name_mapping', 'in_room_capacity'] 
         if not all(sheet in xls.sheet_names for sheet in required_sheets):
             raise ValueError("Missing required sheets in input file")
 
@@ -43,28 +48,28 @@ def read_input_files():
             roll_name_df.rename(columns={'Roll': 'rollno', 'Name': 'name'}, inplace=True)
         roll_name_df['rollno'] = roll_name_df['rollno'].astype(str).str.strip()
         roll_name_df['name'] = roll_name_df['name'].astype(str).str.strip()
-
+        
         room_df = pd.read_excel(xls, 'in_room_capacity').iloc[:, :3]
         room_df.columns = ['Room No.', 'Exam Capacity', 'Block']
         room_df['Room No.'] = room_df['Room No.'].astype(str).str.strip()
         room_df['Block'] = room_df['Block'].astype(str).str.strip()
 
-        return timetable_df, course_roll_df, roll_name_df, room_df
+        return timetable_df, course_roll_df, roll_name_df, room_df # Returning all dataframes
 
     except Exception as e:
         logging.error(f"Input file error: {str(e)}", exc_info=True)
         raise
 
-# --- 3. Helper: Get Subjects for a Specific Date/Session ---
+# --- 3. Helper function: Get Subjects for a Specific Date/Session ---
 def get_subjects_for_date_session(timetable_df, date_obj, session):
     """
-    Returns list of subjects scheduled for a specific date and session ('Morning' or 'Evening').
+    it helps us to Return list of subjects scheduled for a specific date and session ('Morning' or 'Evening').
     """
     row = timetable_df[timetable_df['Date'] == date_obj]
     if row.empty:
         print(f"No timetable entry found for date: {date_obj}")
         return []
-    return row.iloc[0][session]
+    return row.iloc[0][session] # Returns the subjects for the given date and session
 
 # --- 4. Clash Checking Among Subjects ---
 def check_clashes(subjects, course_roll_df):
